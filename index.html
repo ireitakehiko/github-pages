@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スピーチ練習アプリ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #2b6cb0;
+      color: white;
+      padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 0.875rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 32px auto;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #2b6cb0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2 .step-badge {
+      background: #2b6cb0;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      line-height: 1.7;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #2b6cb0;
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .preset-btn {
+      background: #ebf4ff;
+      color: #2b6cb0;
+      border: 1px solid #bee3f8;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .preset-btn:hover {
+      background: #bee3f8;
+    }
+
+    /* TTS Section */
+    .tts-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .voice-select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .voice-select-group label {
+      font-size: 0.85rem;
+      color: #718096;
+      font-weight: 600;
+    }
+
+    select {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #2b6cb0;
+    }
+
+    .slider-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-item label {
+      font-size: 0.85rem;
+      color: #718096;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #2b6cb0;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #2b6cb0;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #2c5282;
+    }
+
+    .btn-danger {
+      background: #e53e3e;
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #c53030;
+    }
+
+    .btn-success {
+      background: #38a169;
+      color: white;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #2f855a;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+    }
+
+    /* Recording section */
+    .record-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: #f7fafc;
+      margin-bottom: 16px;
+      min-height: 48px;
+    }
+
+    .record-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #cbd5e0;
+      flex-shrink: 0;
+    }
+
+    .record-indicator.recording {
+      background: #e53e3e;
+      animation: pulse 1s infinite;
+    }
+
+    .record-indicator.ready {
+      background: #38a169;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .record-status-text {
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+
+    .timer {
+      margin-left: auto;
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #2b6cb0;
+    }
+
+    .timer.recording {
+      color: #e53e3e;
+    }
+
+    .recordings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .recording-item {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .recording-item .rec-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recording-item .rec-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .recording-item .rec-date {
+      font-size: 0.75rem;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    .recording-item audio {
+      flex: 1;
+      max-width: 240px;
+      height: 36px;
+    }
+
+    .recording-item .delete-btn {
+      background: none;
+      border: none;
+      color: #a0aec0;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .recording-item .delete-btn:hover {
+      color: #e53e3e;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #a0aec0;
+      font-size: 0.9rem;
+      padding: 20px;
+    }
+
+    /* Highlighting */
+    .script-display {
+      line-height: 1.9;
+      font-size: 1.05rem;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+      min-height: 60px;
+      word-break: break-all;
+    }
+
+    .word-highlight {
+      background: #fef08a;
+      border-radius: 3px;
+      transition: background 0.1s;
+    }
+
+    .word-done {
+      color: #718096;
+    }
+
+    /* Tips */
+    .tips {
+      background: #ebf8ff;
+      border-left: 4px solid #2b6cb0;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      color: #2c5282;
+      line-height: 1.6;
+    }
+
+    .tips strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .slider-group {
+        grid-template-columns: 1fr;
+      }
+      .recording-item {
+        flex-wrap: wrap;
+      }
+      .recording-item audio {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>スピーチ練習アプリ</h1>
+  <p>原稿を入力して、聞いて、録音して、上達しよう</p>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: Script -->
+  <div class="card">
+    <h2><span class="step-badge">1</span>原稿を入力する</h2>
+    <div class="preset-buttons">
+      <button class="preset-btn" onclick="loadPreset('self')">自己紹介</button>
+      <button class="preset-btn" onclick="loadPreset('presentation')">プレゼン冒頭</button>
+      <button class="preset-btn" onclick="loadPreset('greeting')">朝礼スピーチ</button>
+      <button class="preset-btn" onclick="loadPreset('clear')">クリア</button>
+    </div>
+    <textarea id="scriptInput" placeholder="ここに練習したいスピーチの原稿を入力してください..."></textarea>
+  </div>
+
+  <!-- Step 2: Listen (TTS) -->
+  <div class="card">
+    <h2><span class="step-badge">2</span>模範音声を聞く</h2>
+    <div class="voice-select-group">
+      <label>音声</label>
+      <select id="voiceSelect"></select>
+    </div>
+    <div class="slider-group">
+      <div class="slider-item">
+        <label>速度 <span id="rateVal">1.0</span></label>
+        <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('rateVal').textContent=this.value">
+      </div>
+      <div class="slider-item">
+        <label>音程 <span id="pitchVal">1.0</span></label>
+        <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('pitchVal').textContent=this.value">
+      </div>
+    </div>
+    <div id="scriptDisplay" class="script-display" style="display:none;margin-bottom:12px;"></div>
+    <div class="tts-controls">
+      <button class="btn btn-primary" id="ttsPlayBtn" onclick="speakScript()">▶ 読み上げ開始</button>
+      <button class="btn btn-outline" id="ttsStopBtn" onclick="stopSpeak()" disabled>■ 停止</button>
+    </div>
+    <div class="tips">
+      <strong>ヒント</strong>
+      速度を遅くして内容を確認してから、通常速度で聞いてみましょう。
+    </div>
+  </div>
+
+  <!-- Step 3: Record -->
+  <div class="card">
+    <h2><span class="step-badge">3</span>自分で録音する</h2>
+    <div class="record-status">
+      <div class="record-indicator" id="recordIndicator"></div>
+      <span class="record-status-text" id="recordStatusText">録音待機中</span>
+      <span class="timer" id="timer">0:00</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-danger" id="recordBtn" onclick="toggleRecord()">● 録音開始</button>
+      <button class="btn btn-outline" id="cancelBtn" onclick="cancelRecord()" disabled>✕ キャンセル</button>
+    </div>
+    <div class="tips">
+      <strong>ヒント</strong>
+      マイクのアクセス許可が必要です。録音後に自分の声を聞いて、模範音声と比べてみましょう。
+    </div>
+
+    <div style="margin-top:20px;">
+      <strong style="font-size:0.9rem;color:#4a5568;">録音履歴</strong>
+      <div id="recordingsList" class="recordings-list">
+        <div class="empty-state">まだ録音がありません</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  // Presets
+  // ============================================================
+  const presets = {
+    self: `はじめまして。私の名前は〇〇と申します。
+現在、△△株式会社でエンジニアとして働いております。
+趣味は読書と料理で、特に休日には新しいレシピに挑戦することが好きです。
+本日はよろしくお願いいたします。`,
+    presentation: `本日はお集まりいただき、ありがとうございます。
+私は今日、私たちのプロジェクトの進捗についてご報告させていただきます。
+まず最初に、この3か月間の成果をご覧ください。
+目標に対して120%の達成率を記録することができました。`,
+    greeting: `おはようございます。
+本日は少し、最近読んだ本についてお話ししたいと思います。
+その本のタイトルは「7つの習慣」です。
+この本から学んだことで、私が最も印象に残ったのは、まず相手を理解することの大切さです。
+ぜひ皆さんも手に取ってみてください。ありがとうございました。`,
+    clear: ''
+  };
+
+  function loadPreset(key) {
+    document.getElementById('scriptInput').value = presets[key];
+  }
+
+  // ============================================================
+  // TTS
+  // ============================================================
+  const synth = window.speechSynthesis;
+  let utterance = null;
+  let words = [];
+  let wordSpans = [];
+
+  function loadVoices() {
+    const voiceSelect = document.getElementById('voiceSelect');
+    const voices = synth.getVoices();
+    voiceSelect.innerHTML = '';
+
+    const jpVoices = voices.filter(v => v.lang.startsWith('ja'));
+    const otherVoices = voices.filter(v => !v.lang.startsWith('ja'));
+    const allVoices = [...jpVoices, ...otherVoices];
+
+    if (allVoices.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '（デフォルト音声）';
+      voiceSelect.appendChild(opt);
+      return;
+    }
+
+    allVoices.forEach((voice, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${voice.name} (${voice.lang})`;
+      opt.dataset.index = voices.indexOf(voice);
+      voiceSelect.appendChild(opt);
+    });
+  }
+
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
+
+  function speakScript() {
+    const text = document.getElementById('scriptInput').value.trim();
+    if (!text) {
+      alert('原稿を入力してください。');
+      return;
+    }
+
+    stopSpeak();
+
+    // Build word display
+    words = text.split(/(\s+)/);
+    const display = document.getElementById('scriptDisplay');
+    display.style.display = 'block';
+    display.innerHTML = '';
+    wordSpans = [];
+
+    words.forEach((w, i) => {
+      const span = document.createElement('span');
+      span.textContent = w;
+      if (w.trim()) {
+        wordSpans.push({ span, index: i });
+      }
+      display.appendChild(span);
+    });
+
+    utterance = new SpeechSynthesisUtterance(text);
+
+    const voiceSelect = document.getElementById('voiceSelect');
+    const selectedOpt = voiceSelect.options[voiceSelect.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.index !== undefined) {
+      utterance.voice = synth.getVoices()[parseInt(selectedOpt.dataset.index)];
+    }
+    utterance.rate = parseFloat(document.getElementById('rateRange').value);
+    utterance.pitch = parseFloat(document.getElementById('pitchRange').value);
+
+    let wordIdx = 0;
+    utterance.onboundary = (e) => {
+      if (e.name === 'word') {
+        wordSpans.forEach(({ span }, i) => {
+          span.className = i < wordIdx ? 'word-done' : (i === wordIdx ? 'word-highlight' : '');
+        });
+        wordIdx++;
+      }
+    };
+
+    utterance.onend = () => {
+      wordSpans.forEach(({ span }) => span.className = 'word-done');
+      document.getElementById('ttsPlayBtn').disabled = false;
+      document.getElementById('ttsStopBtn').disabled = true;
+    };
+
+    synth.speak(utterance);
+    document.getElementById('ttsPlayBtn').disabled = true;
+    document.getElementById('ttsStopBtn').disabled = false;
+  }
+
+  function stopSpeak() {
+    synth.cancel();
+    document.getElementById('ttsPlayBtn').disabled = false;
+    document.getElementById('ttsStopBtn').disabled = true;
+  }
+
+  // ============================================================
+  // Recording
+  // ============================================================
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordingCount = 0;
+  let timerInterval = null;
+  let timerSeconds = 0;
+  let isRecording = false;
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function startTimer() {
+    timerSeconds = 0;
+    const timerEl = document.getElementById('timer');
+    timerEl.textContent = '0:00';
+    timerEl.className = 'timer recording';
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      timerEl.textContent = formatTime(timerSeconds);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    const timerEl = document.getElementById('timer');
+    timerEl.className = 'timer';
+  }
+
+  async function toggleRecord() {
+    if (isRecording) {
+      // Stop
+      mediaRecorder.stop();
+    } else {
+      // Start
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          isRecording = false;
+          stopTimer();
+          setRecordUI(false);
+
+          if (recordedChunks.length > 0) {
+            saveRecording();
+          }
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        startTimer();
+        setRecordUI(true);
+      } catch (err) {
+        if (err.name === 'NotAllowedError') {
+          alert('マイクのアクセスが拒否されました。ブラウザの設定でマイクを許可してください。');
+        } else {
+          alert('録音の開始に失敗しました: ' + err.message);
+        }
+      }
+    }
+  }
+
+  function cancelRecord() {
+    if (mediaRecorder && isRecording) {
+      recordedChunks = [];
+      mediaRecorder.onstop = () => {
+        mediaRecorder.stream && mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        isRecording = false;
+        stopTimer();
+        setRecordUI(false);
+        document.getElementById('timer').textContent = '0:00';
+      };
+      mediaRecorder.stop();
+    }
+  }
+
+  function setRecordUI(recording) {
+    const btn = document.getElementById('recordBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const indicator = document.getElementById('recordIndicator');
+    const statusText = document.getElementById('recordStatusText');
+
+    if (recording) {
+      btn.textContent = '■ 録音停止';
+      btn.className = 'btn btn-outline';
+      cancelBtn.disabled = false;
+      indicator.className = 'record-indicator recording';
+      statusText.textContent = '録音中...';
+    } else {
+      btn.textContent = '● 録音開始';
+      btn.className = 'btn btn-danger';
+      cancelBtn.disabled = true;
+      indicator.className = 'record-indicator';
+      statusText.textContent = '録音待機中';
+    }
+  }
+
+  function saveRecording() {
+    recordingCount++;
+    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+    const url = URL.createObjectURL(blob);
+    const duration = formatTime(timerSeconds);
+    const now = new Date();
+    const dateStr = now.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const list = document.getElementById('recordingsList');
+
+    // Remove empty state
+    const empty = list.querySelector('.empty-state');
+    if (empty) empty.remove();
+
+    const item = document.createElement('div');
+    item.className = 'recording-item';
+    item.dataset.id = recordingCount;
+    item.innerHTML = `
+      <div class="rec-info">
+        <div class="rec-name">録音 ${recordingCount}</div>
+        <div class="rec-date">${dateStr} &nbsp;|&nbsp; ${duration}</div>
+      </div>
+      <audio controls src="${url}"></audio>
+      <button class="delete-btn" onclick="deleteRecording(this, '${url}')" title="削除">✕</button>
+    `;
+
+    list.insertBefore(item, list.firstChild);
+  }
+
+  function deleteRecording(btn, url) {
+    if (!confirm('この録音を削除しますか？')) return;
+    URL.revokeObjectURL(url);
+    btn.closest('.recording-item').remove();
+
+    const list = document.getElementById('recordingsList');
+    if (list.children.length === 0) {
+      list.innerHTML = '<div class="empty-state">まだ録音がありません</div>';
+    }
+  }
+</script>
+
+</body>
+</html>
