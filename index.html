@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Journal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">My Journal</h1>
+        <button class="btn-new" id="btnNew">+ 新しい日記</button>
+      </div>
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" class="search-input" placeholder="検索..." />
+      </div>
+      <ul class="entry-list" id="entryList">
+        <!-- entries populated by JS -->
+      </ul>
+      <div class="sidebar-footer">
+        <span id="entryCount">0 件の日記</span>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">&#128221;</div>
+        <h2>日記を始めましょう</h2>
+        <p>「+ 新しい日記」をクリックして最初のエントリを書いてみましょう。</p>
+        <button class="btn-primary" id="btnNewMain">+ 新しい日記</button>
+      </div>
+
+      <!-- Editor -->
+      <div class="editor hidden" id="editor">
+        <div class="editor-toolbar">
+          <div class="editor-meta">
+            <input type="text" id="entryTitle" class="title-input" placeholder="タイトル（任意）" />
+            <div class="meta-row">
+              <span class="date-display" id="dateDisplay"></span>
+              <div class="mood-picker">
+                <span class="mood-label">気分：</span>
+                <button class="mood-btn active" data-mood="none" title="なし">—</button>
+                <button class="mood-btn" data-mood="great" title="最高">&#128513;</button>
+                <button class="mood-btn" data-mood="good" title="良い">&#128512;</button>
+                <button class="mood-btn" data-mood="neutral" title="普通">&#128528;</button>
+                <button class="mood-btn" data-mood="bad" title="悪い">&#128543;</button>
+                <button class="mood-btn" data-mood="awful" title="最悪">&#128545;</button>
+              </div>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" id="btnSave">保存</button>
+            <button class="btn-delete hidden" id="btnDelete">削除</button>
+            <button class="btn-cancel" id="btnCancel">キャンセル</button>
+          </div>
+        </div>
+        <textarea id="entryContent" class="content-input" placeholder="今日はどんな日でしたか..."></textarea>
+      </div>
+
+      <!-- View mode -->
+      <div class="viewer hidden" id="viewer">
+        <div class="viewer-toolbar">
+          <div class="viewer-meta">
+            <h2 class="viewer-title" id="viewerTitle"></h2>
+            <div class="viewer-info">
+              <span class="viewer-date" id="viewerDate"></span>
+              <span class="viewer-mood" id="viewerMood"></span>
+            </div>
+          </div>
+          <div class="viewer-actions">
+            <button class="btn-edit" id="btnEdit">編集</button>
+            <button class="btn-delete-view" id="btnDeleteView">削除</button>
+          </div>
+        </div>
+        <div class="viewer-content" id="viewerContent"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal">
+      <h3>削除の確認</h3>
+      <p>このエントリを削除しますか？この操作は取り消せません。</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modalCancel">キャンセル</button>
+        <button class="btn-modal-confirm" id="modalConfirm">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
