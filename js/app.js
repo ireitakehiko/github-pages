@@ -267,12 +267,20 @@ function createVideoCard(video, assignmentMap) {
             : 'M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16zM16 17H5V7h11l3.55 5L16 17z'}"/>
         </svg>
       </button>
+      <button class="video-action-btn notebooklm-btn" data-video-id="${video.videoId}" aria-label="NotebookLMに追加">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 14H8v-2h8v2zm0-4H8v-2h8v2zm-2-4H8V6h6v2z"/></svg>
+      </button>
     </div>
   `;
 
   div.querySelector('.assign-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     openAssignModal(video.videoId);
+  });
+
+  div.querySelector('.notebooklm-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSingleVideoInNotebookLM(video.videoId);
   });
 
   div.addEventListener('click', () => {
@@ -386,6 +394,9 @@ function renderCategoriesScreen() {
         <div class="category-item-count">${count}件の動画</div>
       </div>
       <div class="category-item-actions">
+        <button class="category-action-btn nlm-cat-btn" data-id="${cat.id}" aria-label="NotebookLMにエクスポート">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 14H8v-2h8v2zm0-4H8v-2h8v2zm-2-4H8V6h6v2z"/></svg>
+        </button>
         <button class="category-action-btn edit-cat-btn" data-id="${cat.id}" aria-label="編集">
           <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
         </button>
@@ -394,6 +405,10 @@ function renderCategoriesScreen() {
         </button>
       </div>
     `;
+    div.querySelector('.nlm-cat-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCategoryNotebookLMModal(cat.id);
+    });
     div.querySelector('.edit-cat-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       openCategoryModal(cat.id);
@@ -482,6 +497,92 @@ async function deleteCategory(id) {
   renderDrawerCategories();
   renderVideoList();
   showToast('カテゴリを削除しました');
+}
+
+// ===== NotebookLM integration =====
+const NOTEBOOKLM_URL = 'https://notebooklm.google.com/';
+
+function ytUrl(videoId) {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }
+}
+
+function openSingleVideoInNotebookLM(videoId) {
+  const url = ytUrl(videoId);
+  copyToClipboard(url).then(() => {
+    window.open(NOTEBOOKLM_URL, '_blank', 'noopener');
+    showToast('URLをコピーしました。NotebookLMのソース追加に貼り付けてください');
+  });
+}
+
+function openCategoryNotebookLMModal(categoryId) {
+  const cat = getCategoryById(categoryId);
+  if (!cat) return;
+
+  const catAssignments = State.assignments.filter(a => a.categoryId === categoryId);
+  const videos = catAssignments
+    .map(a => State.videos.find(v => v.videoId === a.videoId))
+    .filter(Boolean);
+
+  $('nlm-modal-title').textContent = `「${cat.name}」をNotebookLMに追加`;
+  $('nlm-modal-count').textContent = `${videos.length}件の動画`;
+
+  const listEl = $('nlm-url-list');
+  listEl.innerHTML = '';
+
+  if (videos.length === 0) {
+    listEl.innerHTML = '<p class="assign-no-cats">このカテゴリに動画がありません</p>';
+    show('modal-notebooklm');
+    return;
+  }
+
+  videos.forEach((video, i) => {
+    const url = ytUrl(video.videoId);
+    const div = document.createElement('div');
+    div.className = 'nlm-url-item';
+    div.innerHTML = `
+      <span class="nlm-url-num">${i + 1}</span>
+      <div class="nlm-url-info">
+        <div class="nlm-url-title">${escHtml(video.title)}</div>
+        <div class="nlm-url-text">${escHtml(url)}</div>
+      </div>
+      <button class="nlm-copy-one-btn" data-url="${escHtml(url)}" aria-label="コピー">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+      </button>
+    `;
+    div.querySelector('.nlm-copy-one-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const u = e.currentTarget.dataset.url;
+      copyToClipboard(u).then(() => showToast('URLをコピーしました'));
+    });
+    listEl.appendChild(div);
+  });
+
+  // Store urls for bulk copy
+  $('nlm-copy-all-btn').dataset.urls = videos.map(v => ytUrl(v.videoId)).join('\n');
+
+  show('modal-notebooklm');
+}
+
+function closeNotebookLMModal() {
+  hide('modal-notebooklm');
 }
 
 // ===== Tag helpers =====
@@ -958,6 +1059,19 @@ function bindEvents() {
   $('modal-assign-cancel').addEventListener('click', closeAssignModal);
   $('modal-assign').addEventListener('click', (e) => {
     if (e.target === $('modal-assign')) closeAssignModal();
+  });
+
+  // NotebookLM modal
+  $('nlm-modal-close').addEventListener('click', closeNotebookLMModal);
+  $('nlm-open-btn').addEventListener('click', () => {
+    window.open(NOTEBOOKLM_URL, '_blank', 'noopener');
+  });
+  $('nlm-copy-all-btn').addEventListener('click', () => {
+    const urls = $('nlm-copy-all-btn').dataset.urls || '';
+    copyToClipboard(urls).then(() => showToast(`全URLをコピーしました`));
+  });
+  $('modal-notebooklm').addEventListener('click', (e) => {
+    if (e.target === $('modal-notebooklm')) closeNotebookLMModal();
   });
 
   // Settings
