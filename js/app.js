@@ -484,6 +484,59 @@ async function deleteCategory(id) {
   showToast('カテゴリを削除しました');
 }
 
+// ===== Tag helpers =====
+function getAllTagStats() {
+  const map = {};
+  State.videos.forEach(v => {
+    (v.tags || []).forEach(tag => {
+      if (!map[tag]) map[tag] = 0;
+      map[tag]++;
+    });
+  });
+  return Object.entries(map)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+const COLORS = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#C77DFF','#FF9F43','#48CAE4','#F8A5C2'];
+function pickColor(index) {
+  return COLORS[index % COLORS.length];
+}
+
+async function createOrAssignFromTag(videoId, tagName) {
+  let cat = State.categories.find(c => c.name.toLowerCase() === tagName.toLowerCase());
+  if (!cat) {
+    cat = {
+      id: `cat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: tagName,
+      color: pickColor(State.categories.length),
+      createdAt: new Date().toISOString(),
+    };
+    await DB.Categories.put(cat);
+    State.categories.push(cat);
+  }
+
+  const alreadyAssigned = State.assignments.some(a => a.videoId === videoId && a.categoryId === cat.id);
+  if (!alreadyAssigned) {
+    const assignment = {
+      id: `asgn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      videoId,
+      categoryId: cat.id,
+      createdAt: new Date().toISOString(),
+    };
+    await DB.Assignments.put(assignment);
+    State.assignments.push(assignment);
+  }
+
+  renderCategoryChips();
+  renderDrawerCategories();
+  renderVideoList();
+  renderCategoriesScreen();
+  // Refresh the assign modal in-place
+  openAssignModal(videoId);
+  showToast(`「${tagName}」カテゴリに追加しました`);
+}
+
 // ===== Assign modal =====
 function openAssignModal(videoId) {
   State.assigningVideoId = videoId;
@@ -499,30 +552,53 @@ function openAssignModal(videoId) {
   const listEl = $('assign-categories-list');
   listEl.innerHTML = '';
 
-  if (State.categories.length === 0) {
-    listEl.innerHTML = '<p style="color:#999;font-size:13px;padding:8px 0">カテゴリがありません。先にカテゴリを作成してください。</p>';
-    show('modal-assign');
-    return;
-  }
-
   const currentAssignments = State.assignments.filter(a => a.videoId === videoId);
   const assignedCatIds = new Set(currentAssignments.map(a => a.categoryId));
 
-  State.categories.forEach(cat => {
-    const isAssigned = assignedCatIds.has(cat.id);
-    const div = document.createElement('div');
-    div.className = `assign-category-item${isAssigned ? ' assigned' : ''}`;
-    div.dataset.categoryId = cat.id;
-    div.innerHTML = `
-      <div class="category-color-dot" style="background:${cat.color}"></div>
-      <div class="assign-category-check">
-        ${isAssigned ? '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>' : ''}
-      </div>
-      <span class="assign-category-name">${escHtml(cat.name)}</span>
-    `;
-    div.addEventListener('click', () => toggleAssignment(videoId, cat.id, div));
-    listEl.appendChild(div);
-  });
+  if (State.categories.length > 0) {
+    State.categories.forEach(cat => {
+      const isAssigned = assignedCatIds.has(cat.id);
+      const div = document.createElement('div');
+      div.className = `assign-category-item${isAssigned ? ' assigned' : ''}`;
+      div.dataset.categoryId = cat.id;
+      div.innerHTML = `
+        <div class="category-color-dot" style="background:${cat.color}"></div>
+        <div class="assign-category-check">
+          ${isAssigned ? '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>' : ''}
+        </div>
+        <span class="assign-category-name">${escHtml(cat.name)}</span>
+      `;
+      div.addEventListener('click', () => toggleAssignment(videoId, cat.id, div));
+      listEl.appendChild(div);
+    });
+  } else {
+    listEl.innerHTML = '<p class="assign-no-cats">カテゴリがありません。タグから作成するか、カテゴリ画面で追加してください。</p>';
+  }
+
+  // Tags section
+  const tags = (video.tags || []).slice(0, 25);
+  const tagsSection = $('assign-tags-section');
+  const tagsContainer = $('assign-tags-container');
+  tagsContainer.innerHTML = '';
+
+  if (tags.length > 0) {
+    show(tagsSection);
+    tags.forEach(tag => {
+      const existingCat = State.categories.find(c => c.name.toLowerCase() === tag.toLowerCase());
+      const isAssigned = existingCat && assignedCatIds.has(existingCat.id);
+      const btn = document.createElement('button');
+      btn.className = `tag-chip${isAssigned ? ' tag-chip-assigned' : existingCat ? ' tag-chip-exists' : ''}`;
+      btn.textContent = tag;
+      if (existingCat) btn.style.borderColor = existingCat.color;
+      if (isAssigned) btn.style.background = existingCat.color;
+      btn.title = isAssigned ? `割り当て済み: ${existingCat.name}` :
+        existingCat ? `カテゴリ「${existingCat.name}」に追加` : `「${tag}」でカテゴリを作成`;
+      btn.addEventListener('click', () => createOrAssignFromTag(videoId, tag));
+      tagsContainer.appendChild(btn);
+    });
+  } else {
+    hide(tagsSection);
+  }
 
   show('modal-assign');
 }
@@ -572,6 +648,105 @@ function openDrawer() {
 function closeDrawer() {
   hide('drawer-overlay');
   hide('drawer');
+}
+
+// ===== Tag → Category bulk modal =====
+function openTagsModal() {
+  const stats = getAllTagStats();
+  const listEl = $('tags-modal-list');
+  listEl.innerHTML = '';
+
+  if (stats.length === 0) {
+    listEl.innerHTML = '<p class="assign-no-cats">動画にタグがありません。<br>動画を再取得するとタグが読み込まれます。</p>';
+    show('modal-tags');
+    return;
+  }
+
+  stats.slice(0, 100).forEach(({ tag, count }) => {
+    const existingCat = State.categories.find(c => c.name.toLowerCase() === tag.toLowerCase());
+    const div = document.createElement('div');
+    div.className = `tag-modal-item${existingCat ? ' tag-modal-item-exists' : ''}`;
+    div.dataset.tag = tag;
+    div.innerHTML = `
+      <div class="tag-modal-check">
+        ${existingCat ? '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>' : ''}
+      </div>
+      <div class="tag-modal-info">
+        <span class="tag-modal-name">${escHtml(tag)}</span>
+        ${existingCat ? `<span class="tag-modal-badge" style="background:${existingCat.color}">カテゴリ済み</span>` : ''}
+      </div>
+      <span class="tag-modal-count">${count}件</span>
+    `;
+    if (!existingCat) {
+      div.addEventListener('click', () => {
+        div.classList.toggle('tag-modal-selected');
+      });
+    }
+    listEl.appendChild(div);
+  });
+
+  show('modal-tags');
+}
+
+async function applyTagCategories() {
+  const selected = Array.from(document.querySelectorAll('.tag-modal-item.tag-modal-selected'))
+    .map(el => el.dataset.tag);
+
+  if (selected.length === 0) {
+    showToast('タグを選択してください');
+    return;
+  }
+
+  let catCount = 0;
+  let assignCount = 0;
+
+  for (let i = 0; i < selected.length; i++) {
+    const tag = selected[i];
+    let cat = State.categories.find(c => c.name.toLowerCase() === tag.toLowerCase());
+    if (!cat) {
+      cat = {
+        id: `cat_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`,
+        name: tag,
+        color: pickColor(State.categories.length),
+        createdAt: new Date().toISOString(),
+      };
+      await DB.Categories.put(cat);
+      State.categories.push(cat);
+      catCount++;
+    }
+
+    // Auto-assign all videos that have this tag
+    const matchingVideos = State.videos.filter(v =>
+      (v.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())
+    );
+    for (const video of matchingVideos) {
+      const alreadyAssigned = State.assignments.some(
+        a => a.videoId === video.videoId && a.categoryId === cat.id
+      );
+      if (!alreadyAssigned) {
+        const assignment = {
+          id: `asgn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          videoId: video.videoId,
+          categoryId: cat.id,
+          createdAt: new Date().toISOString(),
+        };
+        await DB.Assignments.put(assignment);
+        State.assignments.push(assignment);
+        assignCount++;
+      }
+    }
+  }
+
+  hide('modal-tags');
+  renderCategoryChips();
+  renderDrawerCategories();
+  renderCategoriesScreen();
+  renderVideoList();
+  showToast(`${catCount}件のカテゴリを作成、${assignCount}件の動画を自動振り分けしました`);
+}
+
+function closeTagsModal() {
+  hide('modal-tags');
 }
 
 // ===== Export / Import =====
@@ -750,6 +925,14 @@ function bindEvents() {
   });
 
   $('add-category-fab').addEventListener('click', () => openCategoryModal());
+  $('tags-from-videos-btn').addEventListener('click', openTagsModal);
+
+  // Tags modal
+  $('modal-tags-cancel').addEventListener('click', closeTagsModal);
+  $('modal-tags-apply').addEventListener('click', applyTagCategories);
+  $('modal-tags').addEventListener('click', (e) => {
+    if (e.target === $('modal-tags')) closeTagsModal();
+  });
 
   // Category modal
   $('modal-category-cancel').addEventListener('click', closeCategoryModal);

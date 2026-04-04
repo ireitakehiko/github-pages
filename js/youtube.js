@@ -138,6 +138,7 @@ const YouTube = (() => {
           publishedAt: item.snippet.publishedAt,
           thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url || '',
           duration: parseDuration(item.contentDetails?.duration || ''),
+          tags: item.snippet.tags || [],
           fetchedAt: new Date().toISOString(),
         });
       });
