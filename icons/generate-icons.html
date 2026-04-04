@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function drawIcon(canvas) {
+  const ctx = canvas.getContext('2d');
+  const s = canvas.width;
+  const r = s * 0.2;
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, s, s);
+  grad.addColorStop(0, '#1a1a2e');
+  grad.addColorStop(1, '#0f3460');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, r);
+  ctx.fill();
+
+  // Red circle
+  ctx.fillStyle = '#FF0000';
+  ctx.beginPath();
+  ctx.arc(s/2, s/2, s * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Play triangle
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  const tx = s * 0.38;
+  const ty = s * 0.32;
+  const tw = s * 0.3;
+  const th = s * 0.36;
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx + tw, ty + th/2);
+  ctx.lineTo(tx, ty + th);
+  ctx.closePath();
+  ctx.fill();
+}
+
+drawIcon(document.getElementById('c192'));
+drawIcon(document.getElementById('c512'));
+
+// Download
+['c192', 'c512'].forEach(id => {
+  const canvas = document.getElementById(id);
+  const a = document.createElement('a');
+  a.download = `icon-${canvas.width}.png`;
+  a.href = canvas.toDataURL();
+  a.textContent = `Download ${canvas.width}px icon`;
+  document.body.appendChild(a);
+  document.body.appendChild(document.createElement('br'));
+});
+</script>
+</body>
+</html>
