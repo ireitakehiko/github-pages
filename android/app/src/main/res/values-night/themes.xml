@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SavingsTracker" parent="Theme.Material3.DayNight.DarkActionBar">
+        <item name="colorPrimary">#81C784</item>
+        <item name="colorOnPrimary">#003300</item>
+        <item name="colorPrimaryContainer">#1B5E20</item>
+        <item name="colorOnPrimaryContainer">#A5D6A7</item>
+        <item name="colorSecondary">#A5D6A7</item>
+        <item name="colorOnSecondary">#003300</item>
+        <item name="colorSecondaryContainer">#1B5E20</item>
+        <item name="colorOnSecondaryContainer">#C8E6C9</item>
+        <item name="colorSurface">#1A1C18</item>
+        <item name="colorOnSurface">#E2E3DC</item>
+    </style>
+</resources>
