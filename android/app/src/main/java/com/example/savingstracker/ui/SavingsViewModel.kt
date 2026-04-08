@@ -10,14 +10,11 @@ import kotlinx.coroutines.launch
 
 class SavingsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: SavingsRepository
+    private val repository = SavingsRepository(
+        SavingsDatabase.getDatabase(application).savingsDao()
+    )
 
-    val allRecords = run {
-        val db = SavingsDatabase.getDatabase(application)
-        repository = SavingsRepository(db.savingsDao())
-        repository.allRecords
-    }
-
+    val allRecords = repository.allRecords
     val totalSavings = repository.totalSavings
     val totalThisMonth = repository.totalThisMonth
     val categoryTotals = repository.categoryTotals
