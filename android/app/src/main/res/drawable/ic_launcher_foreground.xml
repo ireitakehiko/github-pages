@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 貯金箱（円マーク） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28 C39.6,28 28,39.6 28,54 C28,68.4 39.6,80 54,80 C68.4,80 80,68.4 80,54 C80,39.6 68.4,28 54,28Z M57,66 L51,66 L51,62 C47.7,61.3 45,59 45,56 L49,56 C49,57.7 51.2,59 54,59 C56.8,59 59,57.7 59,56 C59,54.3 56.8,53 54,53 C50,53 47,50.7 47,48 C47,45.3 49.7,43 53,42.1 L53,38 L59,38 L59,42.1 C62.3,43 65,45.3 65,48 L61,48 C61,46.3 58.8,45 56,45 C53.2,45 51,46.3 51,48 C51,49.7 53.2,51 56,51 C60,51 63,53.3 63,56 C63,58.7 60.3,61.3 57,62 L57,66Z" />
+</vector>
