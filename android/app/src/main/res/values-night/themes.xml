@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SavingsTracker" parent="Theme.Material3.DayNight.DarkActionBar">
+    <style name="Theme.SavingsTracker" parent="Theme.Material3.DayNight">
         <item name="colorPrimary">#81C784</item>
         <item name="colorOnPrimary">#003300</item>
         <item name="colorPrimaryContainer">#1B5E20</item>
